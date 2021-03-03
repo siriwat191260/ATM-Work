@@ -11,8 +11,8 @@
 using namespace std;
 
 int x,m;
-string sname,status;
-fstream list("List.txt",ios::app);
+string sname,status,stat;
+float balance;
 
 string toUpperStr(string x){
     string y = x;
@@ -21,32 +21,49 @@ string toUpperStr(string x){
 }
 
 void write(string name,float money,string status,float amount){
+	fstream list("List.txt",ios::app);
 	list<<name<<","<<money<<","<<status<<","<<amount<<endl;
+	list.close();
 }
 
-void importDataFromFile(string fn,vector<string> &names,vector<float> &moneys){
-	fstream source("Bank.txt");
+void importDataFromFile(string fn,vector<string> &names,vector<float> &moneys,vector<string> &stats,vector<float> &balances){
+	fstream source(fn.c_str());
     string text;
     char name[100];
-    char format[] = "%[^,],%f";
     while(getline(source,text)){
     	float money;
         char ctext[100];
+        char format[] = "%[^,],%f";
         strcpy(ctext,text.c_str());
         sscanf(ctext,format,name,&money);
-        names.push_back(name);
-        moneys.push_back(money);
+        write(name,money,"Add",money);
     }
     source.close();
+    fstream list("List.txt",ios::in);
+    while(getline(list,text)){
+    	float money;
+        char ctext[100];
+        char format[] = "%[^,],%f,%c,%f";
+        strcpy(ctext,text.c_str());
+        sscanf(ctext,format,name,&money,&stat,&balance);
+        names.push_back(name);
+        moneys.push_back(money);
+        stats.push_back(stat);
+        balances.push_back(balance);
+    }
+    list.close();
 }
 
-void searchName(vector<string> &names,vector<float> &moneys,string key){
+void searchName(vector<string> &names,vector<float> &moneys,vector<string> &stats,vector<float> &balances,string key){
     int N = names.size();
     int stat = 0;
     cout << "---------------------------------\n";
+    cout << "NAME" << "\t\t" << "amount" << "\t\t" << "Add" << "\t\t" << "DEDUCT" << "\t\t" << "BALANCE"<<endl;
     for(int i = 0 ; i < N ; i++){
         if(key == toUpperStr(names[i])){
-            cout << names[i] << "'s moneys = " << moneys[i] << endl;
+            cout << names[i] << "\t\t" << moneys[i] << "\t\t";
+			if(stats[i] == "withdraw") cout<< "\t\t";
+			cout<< "\t\t" << stats[i] << "\t\t" << balances[i] << endl;
             stat = 1;
         }
     }
@@ -172,8 +189,10 @@ int main(){
     string filename = "Bank.txt";
     vector<string> names;
     vector<float> moneys;
+    vector<string> stats;
+	vector<float> balances;
     string key;
-    importDataFromFile(filename, names, moneys);
+    importDataFromFile(filename, names, moneys , stats, balances);
     cout<<"Please input your name : ";
 	getline(cin,key);
 	key = toUpperStr(key);
@@ -189,12 +208,11 @@ int main(){
         if(x == 1) Deposit(names, moneys, key);
 		if(x == 2) Withdraw(names, moneys, key);
 		if(x == 3) Transfer(names, moneys, key);
-        if(x == 4) searchName(names, moneys, key);
+        if(x == 4) searchName(names, moneys, stats, balances, key);
         if(x == 0) Balance(names, moneys, key);
         if(x == 5){
 		system("cls");
 		cout << "THANK YOU FOR CHOOSING US";
 }
-
     return 0;
 }
